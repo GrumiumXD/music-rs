@@ -1,7 +1,7 @@
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
-    use axum::Router;
+    use axum::{Router, routing};
     use leptos::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
     use music_rs::app::*;
@@ -19,6 +19,7 @@ async fn main() {
 
     // build our application with a route
     let app = Router::new()
+        .route("/api/*fn_name", routing::get(leptos_axum::handle_server_fns))
         .leptos_routes(&leptos_options, routes, App)
         .fallback(file_and_error_handler)
         .with_state(leptos_options);
