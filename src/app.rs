@@ -74,6 +74,16 @@ fn Song(si: SongInfo) -> impl IntoView {
     }
 }
 
+#[component]
+fn Header() -> impl IntoView {
+    view! {
+        <header class="w-full flex flex-col items-center">
+            <h1 class="text-5xl text-teal-100">"Music"</h1>
+            <span class="text-teal-100">"Version - 1.2"</span>
+        </header>
+    }
+}
+
 /// Renders the home page of your application.
 #[component]
 fn HomePage() -> impl IntoView {
@@ -84,7 +94,7 @@ fn HomePage() -> impl IntoView {
     let on_click = move |_| {set_count.update(|count| *count += 1); values.refetch()};
 
     view! {
-        <h1>"Welcome to Leptos!"</h1>
+        <Header/>
         <Suspense fallback=move || {
             view! { <p>"Loading 1..."</p> }
         }>
