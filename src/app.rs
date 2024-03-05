@@ -6,38 +6,36 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SongInfo{
-    song: String,
+    title: String,
+    ogg: String,
     banner: String,
 }
 
-#[server(ScanSongs, "/api", "GetJSON")]
-async fn scan_songs() -> Result<Vec<SongInfo>, ServerFnError> {
-    let song_dir = "songs";
-    let banner_dir = "banner";
 
+#[cfg(feature = "ssr")]
+#[derive(Deserialize)]
+pub struct Infos{
+    songs: Vec<SongInfo>
+}
+
+#[server(GetSongs, "/api", "GetJSON")]
+async fn get_songs() -> Result<Vec<SongInfo>, ServerFnError> {
     use std::{fs, path};
+    use toml;
 
     let conf = get_configuration(None).await.unwrap();
     let options = conf.leptos_options;
 
-    let dir = path::Path::new(&options.site_root).join(song_dir);
+    let file = path::Path::new(&options.site_root).join("songs.toml");
+
+    let file = fs::read_to_string(file)?;
     
-    let mut songs = Vec::new();
+    let song_info: Infos = toml::from_str(&file)?;
 
-    for entry in fs::read_dir(dir.as_path())? {
-        let path = entry?.path();
-
-        let stem = path.file_stem().ok_or(ServerFnError::new("no file name"))?.to_str().ok_or(ServerFnError::new("no valid UTF8"))?;
-
-        let song = format!("{song_dir}/{stem}.ogg");
-        let banner = format!("{banner_dir}/{stem}.png");
-
-        songs.push(SongInfo { song, banner });
-    }
-
-    Ok(songs)
+    Ok(song_info.songs)
 }
 
+/// main component
 #[component]
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
@@ -64,16 +62,18 @@ pub fn App() -> impl IntoView {
     }
 }
 
+/// A single song button
 #[component]
 fn Song(si: SongInfo) -> impl IntoView {
     view! {
         <div class="rounded-sm">
-            <span>{si.song}</span>
+            <span>{si.title}</span>
             <img src=si.banner/>
         </div>
     }
 }
 
+/// Main header of the page
 #[component]
 fn Header() -> impl IntoView {
     view! {
@@ -90,7 +90,7 @@ fn HomePage() -> impl IntoView {
     // Creates a reactive value to update the button
     let (count, set_count) = create_signal(0);
     
-    let values = create_resource(|| (), |_| scan_songs());
+    let values = create_resource(|| (), |_| get_songs());
     let on_click = move |_| {set_count.update(|count| *count += 1); values.refetch()};
 
     view! {
