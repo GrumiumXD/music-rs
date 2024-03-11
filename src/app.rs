@@ -14,7 +14,7 @@ pub struct SongInfo{
 
 #[cfg(feature = "ssr")]
 #[derive(Deserialize)]
-pub struct Infos{
+pub struct Assets{
     songs: Vec<SongInfo>
 }
 
@@ -26,13 +26,13 @@ async fn get_songs() -> Result<Vec<SongInfo>, ServerFnError> {
     let conf = get_configuration(None).await.unwrap();
     let options = conf.leptos_options;
 
-    let file = path::Path::new(&options.site_root).join("songs.toml");
+    let file = path::Path::new(&options.site_root).join("assets/assets.toml");
 
     let file = fs::read_to_string(file)?;
     
-    let song_info: Infos = toml::from_str(&file)?;
+    let assets: Assets = toml::from_str(&file)?;
 
-    Ok(song_info.songs)
+    Ok(assets.songs)
 }
 
 /// main component
@@ -66,9 +66,14 @@ pub fn App() -> impl IntoView {
 #[component]
 fn Song(si: SongInfo) -> impl IntoView {
     view! {
-        <div class="rounded-sm">
-            <span>{si.title}</span>
-            <img src=si.banner/>
+        <div class="flex flex-col items-center gap-2">
+            <button
+                class="overflow-hidden rounded-lg shadow-lg shadow-slate-600"
+                class="hover:outline-4 hover:outline-double hover:outline-teal-100 active:scale-95"
+            >
+                <img class="sepia" src=si.banner/>
+            </button>
+            <span class=" font-kode text-teal-100">{si.title}</span>
         </div>
     }
 }
@@ -77,8 +82,8 @@ fn Song(si: SongInfo) -> impl IntoView {
 #[component]
 fn Header() -> impl IntoView {
     view! {
-        <header class="w-full flex flex-col items-center">
-            <h1 class="text-5xl text-teal-100">"Music"</h1>
+        <header class="font-kode w-full flex flex-col items-center mt-2 mb-5">
+            <h1 class="text-7xl text-teal-100">"Music"</h1>
             <span class="text-teal-100">"Version - 1.2"</span>
         </header>
     }
@@ -99,7 +104,7 @@ fn HomePage() -> impl IntoView {
             view! { <p>"Loading 1..."</p> }
         }>
             <ErrorBoundary fallback=|errors| view! { <ErrorTemplate errors/> }>
-                <div class="flex flex-col">
+                <div class="flex flex-col gap-4">
                     {move || {
                         values
                             .and_then(|v| {

@@ -4,7 +4,9 @@ module.exports = {
         files: ["*.html", "./src/**/*.rs"],
     },
     theme: {
-        extend: {},
+        fontFamily: {
+            kode: ["Kode Mono", "sans-serif"]
+        },
     },
     plugins: [],
 }
