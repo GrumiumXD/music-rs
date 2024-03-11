@@ -3,6 +3,7 @@ use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
+use leptos_icons::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SongInfo{
@@ -64,16 +65,23 @@ pub fn App() -> impl IntoView {
 
 /// A single song button
 #[component]
-fn Song(si: SongInfo) -> impl IntoView {
+fn Song(si: SongInfo, #[prop(into)] on_click: Callback<ev::MouseEvent>, #[prop(into)] active: Signal<bool>) -> impl IntoView {
+    use icondata as i;
+
+    let note_icon = move || active().then(||view! { <Icon icon=i::BiMusicSolid/> });
+
     view! {
         <div class="flex flex-col items-center gap-2">
             <button
+                on:click=on_click
                 class="overflow-hidden rounded-lg shadow-lg shadow-slate-600"
                 class="hover:outline-4 hover:outline-double hover:outline-teal-100 active:scale-95"
             >
-                <img class="sepia" src=si.banner/>
+                <img class=("sepia", move || !active()) src=si.banner/>
             </button>
-            <span class=" font-kode text-teal-100">{si.title}</span>
+            <div class="flex items-center gap-3 font-kode text-teal-100">
+                {note_icon} <span>{si.title}</span> {note_icon}
+            </div>
         </div>
     }
 }
@@ -93,10 +101,19 @@ fn Header() -> impl IntoView {
 #[component]
 fn HomePage() -> impl IntoView {
     // Creates a reactive value to update the button
-    let (count, set_count) = create_signal(0);
+    let (current_song, set_current_song) = create_signal::<Option<usize>>(None);
     
     let values = create_resource(|| (), |_| get_songs());
-    let on_click = move |_| {set_count.update(|count| *count += 1); values.refetch()};
+    // let on_click = move |_| {set_count.update(|count| *count += 1); values.refetch()};
+
+    let handle_click = move |i| set_current_song.update(|v|{
+        if *v == Some(i) {
+            *v = None;
+            return
+        }
+
+        *v = Some(i);
+    });
 
     view! {
         <Header/>
@@ -108,26 +125,23 @@ fn HomePage() -> impl IntoView {
                     {move || {
                         values
                             .and_then(|v| {
-                                v.iter().map(|s| view! { <Song si=s.clone()/> }).collect_view()
+                                v.iter()
+                                    .enumerate()
+                                    .map(|(index, s)| {
+                                        view! {
+                                            <Song
+                                                si=s.clone()
+                                                on_click=move |_| handle_click(index)
+                                                active=Signal::derive(move || Some(index) == current_song())
+                                            />
+                                        }
+                                    })
+                                    .collect_view()
                             })
                     }}
 
                 </div>
             </ErrorBoundary>
         </Suspense>
-
-        <button
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            on:click=on_click
-        >
-            "Click Me: "
-            {count}
-        </button>
-        <div class="flex gap-6 flex-col">
-            <div class="rounded-sm bg-red-600 w-32">1</div>
-            <div class="rounded-sm bg-blue-600 w-32">2</div>
-            <div class="rounded-sm bg-green-600 w-32">3</div>
-            <div class="rounded-sm bg-yellow-400 w-32">4</div>
-        </div>
     }
 }
