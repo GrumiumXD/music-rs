@@ -23,13 +23,11 @@ async fn get_songs() -> Result<Vec<SongInfo>, ServerFnError> {
     use std::{fs, path};
     use toml;
 
-    let conf = get_configuration(None).await.unwrap();
-    let options = conf.leptos_options;
+    let options = use_context::<LeptosOptions>()
+        .ok_or(ServerFnError::new("Could not fetch options from context"))?;
 
     let file = path::Path::new(&options.site_root).join("assets/assets.toml");
-
     let file = fs::read_to_string(file)?;
-
     let assets: Assets = toml::from_str(&file)?;
 
     Ok(assets.songs)
