@@ -1,5 +1,5 @@
 use crate::error_template::{AppError, ErrorTemplate};
-use leptos::*;
+use leptos::{html::Audio, *};
 use leptos_meta::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
@@ -68,6 +68,19 @@ pub fn App() -> impl IntoView {
 fn Song(si: SongInfo, #[prop(into)] on_click: Callback<ev::MouseEvent>, #[prop(into)] active: Signal<bool>) -> impl IntoView {
     use icondata as i;
 
+    let audio = create_node_ref::<Audio>();
+
+    create_effect(move|_|{
+        let audio_element = audio.get().expect("audio element should be mounted");
+
+        if active() {
+            let _ = audio_element.play();
+        } else {
+            let _ = audio_element.pause();
+            let _ = audio_element.fast_seek(0.0);
+        }
+    });
+
     let note_icon = move || active().then(||view! { <Icon icon=i::BiMusicSolid/> });
 
     view! {
@@ -82,6 +95,7 @@ fn Song(si: SongInfo, #[prop(into)] on_click: Callback<ev::MouseEvent>, #[prop(i
             <div class="flex items-center gap-3 font-kode text-teal-100">
                 {note_icon} <span>{si.title}</span> {note_icon}
             </div>
+            <audio _ref=audio loop src=si.ogg></audio>
         </div>
     }
 }
