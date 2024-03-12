@@ -1,22 +1,21 @@
 use crate::error_template::{AppError, ErrorTemplate};
 use leptos::{html::Audio, *};
+use leptos_icons::*;
 use leptos_meta::*;
 use leptos_router::*;
 use serde::{Deserialize, Serialize};
-use leptos_icons::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SongInfo{
+pub struct SongInfo {
     title: String,
     ogg: String,
     banner: String,
 }
 
-
 #[cfg(feature = "ssr")]
 #[derive(Deserialize)]
-pub struct Assets{
-    songs: Vec<SongInfo>
+pub struct Assets {
+    songs: Vec<SongInfo>,
 }
 
 #[server(GetSongs, "/api", "GetJSON")]
@@ -30,7 +29,7 @@ async fn get_songs() -> Result<Vec<SongInfo>, ServerFnError> {
     let file = path::Path::new(&options.site_root).join("assets/assets.toml");
 
     let file = fs::read_to_string(file)?;
-    
+
     let assets: Assets = toml::from_str(&file)?;
 
     Ok(assets.songs)
@@ -44,9 +43,11 @@ pub fn App() -> impl IntoView {
 
     view! {
         <Stylesheet id="leptos" href="/pkg/music-rs.css"/>
+        <Link rel="apple-touch-icon" href="logo192.png"/>
+        <Link rel="manifest" href="manifest.json"/>
 
         // sets the document title
-        <Title text="Welcome to Leptos"/>
+        <Title text="Music"/>
 
         // content for this welcome page
         <Router fallback=|| {
@@ -65,12 +66,16 @@ pub fn App() -> impl IntoView {
 
 /// A single song button
 #[component]
-fn Song(si: SongInfo, #[prop(into)] on_click: Callback<ev::MouseEvent>, #[prop(into)] active: Signal<bool>) -> impl IntoView {
+fn Song(
+    si: SongInfo,
+    #[prop(into)] on_click: Callback<ev::MouseEvent>,
+    #[prop(into)] active: Signal<bool>,
+) -> impl IntoView {
     use icondata as i;
 
     let audio = create_node_ref::<Audio>();
 
-    create_effect(move|_|{
+    create_effect(move |_| {
         let audio_element = audio.get().expect("audio element should be mounted");
 
         if active() {
@@ -81,7 +86,7 @@ fn Song(si: SongInfo, #[prop(into)] on_click: Callback<ev::MouseEvent>, #[prop(i
         }
     });
 
-    let note_icon = move || active().then(||view! { <Icon icon=i::BiMusicSolid/> });
+    let note_icon = move || active().then(|| view! { <Icon icon=i::BiMusicSolid/> });
 
     view! {
         <div class="flex flex-col items-center gap-2">
@@ -116,18 +121,19 @@ fn Header() -> impl IntoView {
 fn HomePage() -> impl IntoView {
     // Creates a reactive value to update the button
     let (current_song, set_current_song) = create_signal::<Option<usize>>(None);
-    
+
     let values = create_resource(|| (), |_| get_songs());
-    // let on_click = move |_| {set_count.update(|count| *count += 1); values.refetch()};
 
-    let handle_click = move |i| set_current_song.update(|v|{
-        if *v == Some(i) {
-            *v = None;
-            return
-        }
+    let handle_click = move |i| {
+        set_current_song.update(|v| {
+            if *v == Some(i) {
+                *v = None;
+                return;
+            }
 
-        *v = Some(i);
-    });
+            *v = Some(i);
+        })
+    };
 
     view! {
         <Header/>
