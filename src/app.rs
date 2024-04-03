@@ -109,7 +109,7 @@ fn Header() -> impl IntoView {
     view! {
         <header class="font-kode w-full flex flex-col items-center mt-2 mb-5">
             <h1 class="text-7xl text-teal-100">"Music"</h1>
-            <span class="text-teal-100">"Version - 1.2"</span>
+            <span class="text-teal-100">"Version - " {env!("CARGO_PKG_VERSION")}</span>
         </header>
     }
 }
